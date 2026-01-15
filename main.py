@@ -134,8 +134,43 @@ def _render_profile_table(profile: dict[str, float | None]) -> None:
     if not profile:
         st.caption("Keine Daten vorhanden.")
         return
-    rows = [{"Kategorie": key, "Wert": _format_number(value)} for key, value in profile.items()]
-    st.dataframe(rows, hide_index=True, use_container_width=True)
+    rows = [
+        {"Kategorie": key, "Wert": value}
+        for key, value in profile.items()
+        if value is not None
+    ]
+    if not rows:
+        st.caption("Keine Daten vorhanden.")
+        return
+
+    data = pd.DataFrame(rows)
+    chart = (
+        alt.Chart(data)
+        .mark_arc(innerRadius=40, outerRadius=90)
+        .encode(
+            theta=alt.Theta("Wert:Q"),
+            color=alt.Color(
+                "Kategorie:N",
+                scale=alt.Scale(
+                    range=[
+                        "#1DB954",
+                        "#9FE9B6",
+                        "#3DDC84",
+                        "#2E8B57",
+                        "#A7F3CE",
+                        "#63D471",
+                        "#2D6A4F",
+                        "#77DFA3",
+                    ]
+                ),
+                legend=alt.Legend(orient="right", labelColor="#b3b3b3", title=None),
+            ),
+            tooltip=["Kategorie", alt.Tooltip("Wert:Q", format=".2f")],
+        )
+        .properties(height=260)
+        .configure_view(strokeOpacity=0)
+    )
+    st.altair_chart(chart, use_container_width=True)
 
 
 def _render_kpi_row(items: list[tuple[str, str]], columns: int = 4) -> None:
