@@ -180,7 +180,8 @@ def _render_profile_table(profile: dict[str, float | None]) -> None:
     )
 
     labels = (
-        base.mark_text(radius=110, size=12, color="#f5f5f5")
+        base.transform_filter("datum.pct > 0")
+        .mark_text(radius=110, size=12, color="#f5f5f5")
         .encode(text=alt.Text("pct:Q", format=".0%"), theta=alt.Theta("Wert:Q"))
     )
 
