@@ -34,17 +34,20 @@ def main() -> None:
         st.markdown("### Auswahl")
         for fachbereich, programs in fachbereiche.items():
             is_active = fachbereich == selected_fachbereich
-            with st.expander(fachbereich, expanded=is_active):
-                current = selected if selected in programs else programs[0]
-                st.radio(
-                    "Studiengang",
-                    programs,
-                    key=f"program-{fachbereich}",
-                    index=programs.index(current),
-                    label_visibility="collapsed",
-                    on_change=_select_program,
-                    args=(fachbereich,),
-                )
+            st.markdown(
+                _fachbereich_header(fachbereich),
+                unsafe_allow_html=True,
+            )
+            current = selected if selected in programs else programs[0]
+            st.radio(
+                "Studiengang",
+                programs,
+                key=f"program-{fachbereich}",
+                index=programs.index(current),
+                label_visibility="collapsed",
+                on_change=_select_program,
+                args=(fachbereich,),
+            )
         st.markdown("### Info")
         st.caption("Quelle: neueste Datei im Ordner `data/`")
         if import_year:
@@ -133,7 +136,8 @@ def _render_year_series(values: dict[str, int | None], import_year: int | None) 
             tooltip=["Jahr", "Wert"],
         )
         .properties(height=220)
-        .configure_view(strokeOpacity=0)
+        .configure_view(strokeOpacity=0, fill="#FFFFFF")
+        .configure(background="#FFFFFF")
     )
     st.altair_chart(chart, use_container_width=True)
     st.caption(" / ".join(f"{label}: {_format_number(value)}" for label, value in zip(labels, series)))
@@ -180,7 +184,9 @@ def _render_profile_table(profile: dict[str, float | None]) -> None:
     )
 
     st.altair_chart(
-        (chart + labels).configure_view(strokeOpacity=0),
+        (chart + labels)
+        .configure_view(strokeOpacity=0, fill="#FFFFFF")
+        .configure(background="#FFFFFF"),
         use_container_width=True,
     )
 
@@ -195,6 +201,20 @@ def _group_by_fachbereich(rows: list[StudyProgramRow]) -> dict[str, list[str]]:
         key = row.fachbereich or "Ohne Fachbereich"
         groups.setdefault(key, []).append(row.studiengang)
     return {key: sorted(values) for key, values in sorted(groups.items())}
+
+
+def _fachbereich_header(fachbereich: str) -> str:
+    colors = {
+        "Technik": "#4192AB",
+        "Wirtschaft": "#003966",
+        "Sozialwesen": "#9B0B33",
+        "Gesundheit": "#3DCC00",
+    }
+    color = colors.get(fachbereich, "#5C6971")
+    return (
+        f'<div class="fachbereich-chip" style="background: {color};">'
+        f"{fachbereich}</div>"
+    )
 
 
 def _section_title(title: str) -> None:
@@ -231,7 +251,7 @@ def _inject_styles() -> None:
         .section-title {
             font-size: 1.2rem;
             font-weight: 700;
-            color: #FFFFFF;
+            color: #000000;
             padding-bottom: 6px;
             border-bottom: 2px solid var(--dhbw-accent);
             margin: 20px 0 12px 0;
@@ -239,23 +259,23 @@ def _inject_styles() -> None:
         .panel-title {
             font-size: 0.9rem;
             font-weight: 600;
-            color: #FFFFFF;
+            color: #000000;
             margin-bottom: 6px;
         }
         .kpi-card {
-            background: var(--dhbw-secondary-25);
+            background: #FFFFFF;
             border: 1px solid var(--dhbw-secondary-50);
             border-radius: 8px;
             padding: 10px 12px;
         }
         .kpi-label {
-            color: #FFFFFF;
+            color: #000000;
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
         .kpi-value {
-            color: #FFFFFF;
+            color: #000000;
             font-size: 1.4rem;
             font-weight: 700;
             margin-top: 4px;
@@ -270,19 +290,30 @@ def _inject_styles() -> None:
         label,
         p,
         span {
-            color: #FFFFFF;
+            color: #000000;
+        }
+        .stApp,
+        section[data-testid="stSidebar"] {
+            background-color: #FFFFFF;
         }
         div[data-testid="stVegaLiteChart"] {
-            background: var(--dhbw-secondary-25);
+            background: #FFFFFF;
             border: 1px solid var(--dhbw-secondary-50);
             border-radius: 8px;
             padding: 8px;
         }
         div[data-testid="stDataFrame"] {
-            background: var(--dhbw-secondary-25);
+            background: #FFFFFF;
             border: 1px solid var(--dhbw-secondary-50);
             border-radius: 8px;
             padding: 4px;
+        }
+        .fachbereich-chip {
+            color: #FFFFFF;
+            font-weight: 700;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin: 12px 0 6px 0;
         }
         a {
             color: var(--dhbw-accent);
