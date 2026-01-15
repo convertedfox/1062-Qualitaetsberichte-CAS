@@ -131,8 +131,8 @@ def _render_year_series(values: dict[str, int | None], import_year: int | None) 
         alt.Chart(chart_data)
         .mark_bar(color="#E2001A", cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
         .encode(
-            x=alt.X("Jahr:N", axis=alt.Axis(labelAngle=0, title=None)),
-            y=alt.Y("Wert:Q", axis=alt.Axis(title=None)),
+            x=alt.X("Jahr:N", axis=alt.Axis(labelAngle=0, labelColor="#000000", titleColor="#000000", title=None)),
+            y=alt.Y("Wert:Q", axis=alt.Axis(labelColor="#000000", titleColor="#000000", title=None)),
             tooltip=["Jahr", "Wert"],
         )
         .properties(height=220)
@@ -167,7 +167,10 @@ def _render_profile_table(profile: dict[str, float | None]) -> None:
         base.mark_arc(innerRadius=40, outerRadius=90)
         .encode(
             theta=alt.Theta("Wert:Q"),
-            color=alt.Color("Kategorie:N", legend=alt.Legend(orient="right", title=None)),
+            color=alt.Color(
+                "Kategorie:N",
+                legend=alt.Legend(orient="right", title=None, labelColor="#000000"),
+            ),
             tooltip=[
                 "Kategorie",
                 alt.Tooltip("Wert:Q", format=".2f"),
