@@ -109,7 +109,7 @@ def _render_profile_sections(row: StudyProgramRow) -> None:
         _render_profile_table(row.dozenten_herkunft_profil)
 
     with col_right:
-        st.markdown('<div class="panel-title">Modulbelegung nach Studiengaengen</div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel-title">Modulbelegung nach Studiengängen</div>', unsafe_allow_html=True)
         _render_profile_table(row.module_belegung_nach_sg)
 
         st.markdown('<div class="panel-title">Herkunft der Modulteilnehmer</div>', unsafe_allow_html=True)
