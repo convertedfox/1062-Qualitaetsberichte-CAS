@@ -28,26 +28,23 @@ def main() -> None:
         first_fachbereich = next(iter(fachbereiche))
         st.session_state["selected_program"] = fachbereiche[first_fachbereich][0]
     selected = st.session_state["selected_program"]
-    selected_fachbereich = fachbereich_by_program.get(selected)
+    selected_fachbereich = fachbereich_by_program.get(selected, "")
 
     with st.sidebar:
         st.markdown("### Auswahl")
         for fachbereich, programs in fachbereiche.items():
-            is_active = fachbereich == selected_fachbereich
-            st.markdown(
-                _fachbereich_header(fachbereich),
-                unsafe_allow_html=True,
-            )
-            current = selected if selected in programs else programs[0]
-            st.radio(
-                "Studiengang",
-                programs,
-                key=f"program-{fachbereich}",
-                index=programs.index(current),
-                label_visibility="collapsed",
-                on_change=_select_program,
-                args=(fachbereich,),
-            )
+            st.markdown(_fachbereich_header(fachbereich), unsafe_allow_html=True)
+            for program in programs:
+                if program == selected:
+                    st.markdown(f"- **{program}**")
+                else:
+                    st.button(
+                        program,
+                        key=f"program-{fachbereich}-{program}",
+                        use_container_width=True,
+                        on_click=_select_program,
+                        args=(program,),
+                    )
         st.markdown("### Info")
         st.caption("Quelle: neueste Datei im Ordner `data/`")
         if import_year:
@@ -194,8 +191,8 @@ def _render_profile_table(profile: dict[str, float | None]) -> None:
     )
 
 
-def _select_program(fachbereich: str) -> None:
-    st.session_state["selected_program"] = st.session_state[f"program-{fachbereich}"]
+def _select_program(program: str) -> None:
+    st.session_state["selected_program"] = program
 
 
 def _group_by_fachbereich(rows: list[StudyProgramRow]) -> dict[str, list[str]]:
@@ -298,6 +295,14 @@ def _inject_styles() -> None:
         .stApp,
         section[data-testid="stSidebar"] {
             background-color: #FFFFFF;
+        }
+        section[data-testid="stSidebar"] .stButton button {
+            background-color: #FFFFFF;
+            border: 1px solid var(--dhbw-secondary-50);
+            color: #000000;
+        }
+        section[data-testid="stSidebar"] .stButton button:hover {
+            border-color: var(--dhbw-secondary-75);
         }
         header,
         [data-testid="stHeader"] {
