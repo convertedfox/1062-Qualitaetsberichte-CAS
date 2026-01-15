@@ -144,9 +144,14 @@ def _render_profile_table(profile: dict[str, float | None]) -> None:
         return
 
     data = pd.DataFrame(rows)
-    chart = (
+    base = (
         alt.Chart(data)
-        .mark_arc(innerRadius=40, outerRadius=90)
+        .transform_joinaggregate(total="sum(Wert)")
+        .transform_calculate(pct="datum.Wert / datum.total")
+    )
+
+    chart = (
+        base.mark_arc(innerRadius=40, outerRadius=90)
         .encode(
             theta=alt.Theta("Wert:Q"),
             color=alt.Color(
@@ -165,12 +170,24 @@ def _render_profile_table(profile: dict[str, float | None]) -> None:
                 ),
                 legend=alt.Legend(orient="right", labelColor="#b3b3b3", title=None),
             ),
-            tooltip=["Kategorie", alt.Tooltip("Wert:Q", format=".2f")],
+            tooltip=[
+                "Kategorie",
+                alt.Tooltip("Wert:Q", format=".2f"),
+                alt.Tooltip("pct:Q", format=".1%"),
+            ],
         )
         .properties(height=260)
-        .configure_view(strokeOpacity=0)
     )
-    st.altair_chart(chart, use_container_width=True)
+
+    labels = (
+        base.mark_text(radius=110, size=12, color="#f5f5f5")
+        .encode(text=alt.Text("pct:Q", format=".0%"), theta=alt.Theta("Wert:Q"))
+    )
+
+    st.altair_chart(
+        (chart + labels).configure_view(strokeOpacity=0),
+        use_container_width=True,
+    )
 
 
 def _render_kpi_row(items: list[tuple[str, str]], columns: int = 4) -> None:
