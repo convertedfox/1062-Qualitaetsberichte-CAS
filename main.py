@@ -65,7 +65,7 @@ def _render_student_metrics(row: StudyProgramRow, import_year: int | None) -> No
     cols = st.columns(2)
 
     with cols[0]:
-        st.markdown('<div class="panel-title">Studienanfänger (letzte 4 Jahre)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel-title">Studienanfänger(innen) (letzte 4 Jahre)</div>', unsafe_allow_html=True)
         _render_year_series(row.studienanfaenger, import_year)
 
     with cols[1]:
@@ -78,9 +78,9 @@ def _render_student_metrics(row: StudyProgramRow, import_year: int | None) -> No
     _render_kpi_row(
         [
             ("Erfolgsquote", _format_percent(row.erfolgsquote)),
-            ("Fachsemester", _format_number(row.fachsemester)),
-            ("Berufserfahrung", _format_number(row.berufserfahrung)),
-            ("Alter", _format_number(row.alter)),
+            ("Ø benötigte Anzahl an Fachsemestern", _format_number(row.fachsemester)),
+            ("Ø Berufserfahrung zu Studienbeginn in Jahren", _format_number(row.berufserfahrung)),
+            ("Ø Alter zu Studienbeginn in Jahren", _format_number(row.alter)),
         ]
     )
 
@@ -99,7 +99,7 @@ def _render_profile_sections(row: StudyProgramRow) -> None:
     col_left, col_right = st.columns(2)
 
     with col_left:
-        st.markdown('<div class="panel-title">Vorstudium der Studienanfänger</div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel-title">Vorstudium der Studienanfänger(innen)</div>', unsafe_allow_html=True)
         _render_profile_table(row.vorstudium_profil)
 
         st.markdown(
