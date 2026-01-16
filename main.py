@@ -9,7 +9,7 @@ from import_parser import StudyProgramRow, get_latest_import_year, load_latest_i
 
 def main() -> None:
     st.set_page_config(
-        page_title="Qualitätsberichte Dashboard",
+        page_title="Studiengangskennzahlen Dashboard",
         page_icon="📊",
         layout="wide",
     )
@@ -52,7 +52,7 @@ def main() -> None:
 
     row = next(item for item in data if item.studiengang == selected)
 
-    st.title("Qualitätsberichte DHBW CAS")
+    st.title("Studiengangskennzahlen DHBW CAS")
     st.subheader(row.studiengang)
     st.caption(f"Fachbereich: {row.fachbereich}")
 
