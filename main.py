@@ -155,12 +155,12 @@ def _render_profile_table(profile: dict[str, float | None]) -> None:
 
     data = pd.DataFrame(rows)
     data["Wert"] = pd.to_numeric(data["Wert"], errors="coerce")
-    data = data[data["Wert"].fillna(0) > 0]
-    if data.empty:
+    data_filtered = data[data["Wert"].fillna(0) > 0]
+    if data_filtered.empty:
         st.caption("Keine Daten vorhanden.")
         return
     base = (
-        alt.Chart(data)
+        alt.Chart(data_filtered)
         .transform_joinaggregate(total="sum(Wert)")
         .transform_calculate(pct="datum.Wert / datum.total")
     )
