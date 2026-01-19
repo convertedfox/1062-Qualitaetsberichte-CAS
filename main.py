@@ -147,7 +147,7 @@ def _render_profile_table(profile: dict[str, float | None]) -> None:
     rows = [
         {"Kategorie": key, "Wert": value}
         for key, value in profile.items()
-        if value is not None
+        if value is not None and value > 0
     ]
     if not rows:
         st.caption("Keine Daten vorhanden.")
