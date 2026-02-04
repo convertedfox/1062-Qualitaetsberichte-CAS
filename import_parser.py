@@ -22,7 +22,6 @@ COL_DOZENTEN_HERKUNFT = "P"
 COL_MODULE_BELEGUNG = "Q"
 COL_MODULTEILNEHMER = "R"
 COL_MODULAUSLASTUNG = "S"
-COL_ANZAHL_MODULE = "T"
 
 
 @dataclass(frozen=True)
@@ -40,7 +39,6 @@ class StudyProgramRow:
     module_belegung_nach_sg: dict[str, Optional[float]]
     modulteilnehmer_herkunft: dict[str, Optional[float]]
     modulauslastung: Optional[float]
-    anzahl_module: Optional[int]
 
 
 def load_latest_import_table(data_dir: Path = DATA_DIR) -> list[StudyProgramRow]:
@@ -158,7 +156,6 @@ def _parse_import_rows(rows: list[dict[str, str]]) -> list[StudyProgramRow]:
                 module_belegung_nach_sg=_parse_profile(row.get(COL_MODULE_BELEGUNG, "")),
                 modulteilnehmer_herkunft=_parse_profile(row.get(COL_MODULTEILNEHMER, "")),
                 modulauslastung=_parse_optional_float(row.get(COL_MODULAUSLASTUNG, "")),
-                anzahl_module=_parse_optional_int(row.get(COL_ANZAHL_MODULE, "")),
             )
         )
     return parsed

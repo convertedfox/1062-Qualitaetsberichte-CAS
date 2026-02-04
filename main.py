@@ -88,9 +88,8 @@ def _render_student_metrics(row: StudyProgramRow, import_year: int | None) -> No
     _render_kpi_row(
         [
             ("Durchschnittliche Modulauslastung", _format_number(row.modulauslastung)),
-            ("Anzahl Module", _format_number(row.anzahl_module)),
         ],
-        columns=2,
+        columns=1,
     )
 
 

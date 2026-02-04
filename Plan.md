@@ -16,7 +16,6 @@ h) Herkunft der Dozenten: Eine Übersicht, woher die Lehrenden stammen.
 i) Modulbelegung nach Studiengängen: In welchen Studiengängen die Studierenden welche Module belegen.
 j) Herkunft der Modulteilnehmer: Aus welchen Studiengängen kommen die Teilnehmer eines Moduls.
 k) Durchschnittliche Modulauslastung: Eine Fließkommazahl, die zeigt, wie stark Module im Schnitt ausgelastet sind.
-l) Anzahl der Module: Wie viele Module insgesamt angeboten werden.
 # Architektur
 ## Quelldateien
 Die Quelldaten werden stets in einer Excel-Datei angeliefert, die einer festen Struktur folgt. Diese Excel-Daten werden im ersten Schritt in einen oder mehrere DataFrames überführt, damit die statistischen Werte sauber weiterverarbeitet werden können.
