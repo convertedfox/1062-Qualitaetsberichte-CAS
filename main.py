@@ -24,18 +24,34 @@ def main() -> None:
     import_year = get_latest_import_year()
     fachbereiche = _group_by_fachbereich(data)
     fachbereich_by_program = {row.studiengang: row.fachbereich for row in data}
-    if "selected_program" not in st.session_state:
+    if "selected_kind" not in st.session_state:
         first_fachbereich = next(iter(fachbereiche))
-        st.session_state["selected_program"] = fachbereiche[first_fachbereich][0]
-    selected = st.session_state["selected_program"]
-    selected_fachbereich = fachbereich_by_program.get(selected, "")
+        st.session_state["selected_kind"] = "program"
+        st.session_state["selected_value"] = fachbereiche[first_fachbereich][0]
+    selected_kind = st.session_state["selected_kind"]
+    selected_value = st.session_state["selected_value"]
+    selected_fachbereich = (
+        selected_value
+        if selected_kind == "fachbereich"
+        else fachbereich_by_program.get(selected_value, "")
+    )
 
     with st.sidebar:
         st.markdown("### Auswahl")
         for fachbereich, programs in fachbereiche.items():
             st.markdown(_fachbereich_header(fachbereich), unsafe_allow_html=True)
+            if selected_kind == "fachbereich" and selected_value == fachbereich:
+                st.markdown(f"- **Übersicht {fachbereich}**")
+            else:
+                st.button(
+                    f"Übersicht {fachbereich}",
+                    key=f"fachbereich-{fachbereich}",
+                    use_container_width=True,
+                    on_click=_select_fachbereich,
+                    args=(fachbereich,),
+                )
             for program in programs:
-                if program == selected:
+                if selected_kind == "program" and program == selected_value:
                     st.markdown(f"- **{program}**")
                 else:
                     st.button(
@@ -50,14 +66,18 @@ def main() -> None:
         if import_year:
             st.caption(f"Importjahr: {import_year}")
 
-    row = next(item for item in data if item.studiengang == selected)
+    if selected_kind == "fachbereich":
+        rows = [item for item in data if item.fachbereich == selected_value]
+        _render_fachbereich_overview(rows, import_year, selected_value)
+    else:
+        row = next(item for item in data if item.studiengang == selected_value)
 
-    st.title("Studiengangskennzahlen DHBW CAS")
-    st.subheader(row.studiengang)
-    st.caption(f"Fachbereich: {row.fachbereich}")
+        st.title("Studiengangskennzahlen DHBW CAS")
+        st.subheader(row.studiengang)
+        st.caption(f"Fachbereich: {row.fachbereich}")
 
-    _render_student_metrics(row, import_year)
-    _render_profile_sections(row)
+        _render_student_metrics(row, import_year)
+        _render_profile_sections(row)
 
 
 def _render_student_metrics(row: StudyProgramRow, import_year: int | None) -> None:
@@ -113,6 +133,36 @@ def _render_profile_sections(row: StudyProgramRow) -> None:
 
         st.markdown('<div class="panel-title">Herkunft der Modulteilnehmer</div>', unsafe_allow_html=True)
         _render_profile_table(row.modulteilnehmer_herkunft)
+
+
+def _render_fachbereich_overview(rows: list[StudyProgramRow], import_year: int | None, fachbereich: str) -> None:
+    st.title("Fachbereichsübersicht DHBW CAS")
+    st.subheader(fachbereich)
+
+    _section_title("Studierendenzahlen")
+    cols = st.columns(2)
+    with cols[0]:
+        st.markdown(
+            '<div class="panel-title">Studienanfänger(innen) (letzte 4 Jahre)</div>',
+            unsafe_allow_html=True,
+        )
+        _render_year_series(_sum_year_series(rows, "studienanfaenger"), import_year)
+
+    with cols[1]:
+        st.markdown(
+            '<div class="panel-title">Immatrikulierte Studierende (letzte 4 Jahre)</div>',
+            unsafe_allow_html=True,
+        )
+        _render_year_series(_sum_year_series(rows, "immatrikulierte"), import_year)
+
+    _section_title("Module")
+    cols = st.columns(2)
+    with cols[0]:
+        st.markdown('<div class="panel-title">Modulbelegung nach Studiengängen</div>', unsafe_allow_html=True)
+        _render_profile_table(_aggregate_profiles(rows, "module_belegung_nach_sg"))
+    with cols[1]:
+        st.markdown('<div class="panel-title">Herkunft der Modulteilnehmer</div>', unsafe_allow_html=True)
+        _render_profile_table(_aggregate_profiles(rows, "modulteilnehmer_herkunft"))
 
 
 def _render_year_series(values: dict[str, int | None], import_year: int | None) -> None:
@@ -196,7 +246,13 @@ def _render_profile_table(profile: dict[str, float | None]) -> None:
 
 
 def _select_program(program: str) -> None:
-    st.session_state["selected_program"] = program
+    st.session_state["selected_kind"] = "program"
+    st.session_state["selected_value"] = program
+
+
+def _select_fachbereich(fachbereich: str) -> None:
+    st.session_state["selected_kind"] = "fachbereich"
+    st.session_state["selected_value"] = fachbereich
 
 
 def _group_by_fachbereich(rows: list[StudyProgramRow]) -> dict[str, list[str]]:
@@ -205,6 +261,31 @@ def _group_by_fachbereich(rows: list[StudyProgramRow]) -> dict[str, list[str]]:
         key = row.fachbereich or "Ohne Fachbereich"
         groups.setdefault(key, []).append(row.studiengang)
     return {key: sorted(values) for key, values in sorted(groups.items())}
+
+
+def _sum_year_series(rows: list[StudyProgramRow], attr: str) -> dict[str, int | None]:
+    totals: dict[str, int] = {"-4": 0, "-3": 0, "-2": 0, "-1": 0}
+    seen: dict[str, bool] = {"-4": False, "-3": False, "-2": False, "-1": False}
+    for row in rows:
+        series = getattr(row, attr)
+        for key in totals:
+            value = series.get(key)
+            if value is None:
+                continue
+            totals[key] += value
+            seen[key] = True
+    return {key: (totals[key] if seen[key] else None) for key in totals}
+
+
+def _aggregate_profiles(rows: list[StudyProgramRow], attr: str) -> dict[str, float | None]:
+    totals: dict[str, float] = {}
+    for row in rows:
+        profile = getattr(row, attr)
+        for key, value in profile.items():
+            if value is None:
+                continue
+            totals[key] = totals.get(key, 0.0) + float(value)
+    return totals
 
 
 def _fachbereich_header(fachbereich: str) -> str:

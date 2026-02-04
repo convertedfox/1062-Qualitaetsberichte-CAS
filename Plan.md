@@ -3,6 +3,7 @@
 Ziel dieser Anwendung ist es, ein übersichtliches Dashboard für die Qualitätsberichterstattung von Studiengängen zu erstellen. 
 Mit Hilfe von Python und Streamlit sollen statistische Daten aus einer großen Excel-Datei gezogen und in einer benutzerfreundlichen Form dargestellt werden. Jede Unterseite des Dashboards wird dabei die gleichen Kennzahlen für einen bestimmten Studiengang abbilden.
 ## Dargestellte Daten
+### Einzelmetriken pro Studiengang
 Das Dashboard soll folgende Metriken für jeden Studiengang visualisieren:
 
 a) Studienanfängerzahlen der letzten vier Jahre: Diese Daten befinden sich am Anfang der Excel-Datei in den ersten Spalten.
@@ -16,6 +17,12 @@ h) Herkunft der Dozenten: Eine Übersicht, woher die Lehrenden stammen.
 i) Modulbelegung nach Studiengängen: In welchen Studiengängen die Studierenden welche Module belegen.
 j) Herkunft der Modulteilnehmer: Aus welchen Studiengängen kommen die Teilnehmer eines Moduls.
 k) Durchschnittliche Modulauslastung: Eine Fließkommazahl, die zeigt, wie stark Module im Schnitt ausgelastet sind.
+### Kumulierte Metriken pro Fachbereich
+Pro Fachbereich soll es eine eigene Übersichtsseite geben, die kumulierte Metriken aller Studiengänge des jeweiligen Fachbereichs darstellt:
+a) Studienanfängerzahlen in den letzten 4 Jahren als Balkendiagramm
+b) Immatrikulierte Studierende in den letzten 4 Jahren (Gesamtzahl) als Balkendiagramm
+c) Wie viele Module belegt jeder Studiengang (?) als Donut - und das aggregieren auf den Fachbereich
+d) Aus welchem Studiengang kommen die Modulteilnehmer (?) als Donut - und das aggregieren auf den Fachbereich
 # Architektur
 ## Quelldateien
 Die Quelldaten werden stets in einer Excel-Datei angeliefert, die einer festen Struktur folgt. Diese Excel-Daten werden im ersten Schritt in einen oder mehrere DataFrames überführt, damit die statistischen Werte sauber weiterverarbeitet werden können.
