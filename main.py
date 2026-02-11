@@ -7,6 +7,13 @@ import streamlit as st
 from import_parser import StudyProgramRow, get_latest_import_year, load_latest_import_table
 
 
+# Studiengänge, die nicht im Dashboard angezeigt werden sollen.
+# Namen müssen exakt den Werten in `row.studiengang` entsprechen.
+HIDDEN_STUDY_PROGRAMS: set[str] = {
+    "Master in Business Management (auslaufend)"# "M.Sc. Beispielstudiengang",
+}
+
+
 def main() -> None:
     """Initialisiert das Dashboard, lädt Daten und rendert die passende Ansicht."""
 
@@ -19,6 +26,7 @@ def main() -> None:
     _inject_styles()
 
     data = load_latest_import_table()
+    data = _filter_hidden_study_programs(data, HIDDEN_STUDY_PROGRAMS)
     if not data:
         st.warning("Keine Studiengänge im Import gefunden.")
         return
@@ -30,13 +38,15 @@ def main() -> None:
         first_fachbereich = next(iter(fachbereiche))
         st.session_state["selected_kind"] = "program"
         st.session_state["selected_value"] = fachbereiche[first_fachbereich][0]
+    else:
+        st.session_state["selected_kind"], st.session_state["selected_value"] = _normalize_selection(
+            fachbereiche,
+            fachbereich_by_program,
+            st.session_state.get("selected_kind", "program"),
+            st.session_state.get("selected_value"),
+        )
     selected_kind = st.session_state["selected_kind"]
     selected_value = st.session_state["selected_value"]
-    selected_fachbereich = (
-        selected_value
-        if selected_kind == "fachbereich"
-        else fachbereich_by_program.get(selected_value, "")
-    )
 
     with st.sidebar:
         st.markdown("### Auswahl")
@@ -279,6 +289,36 @@ def _group_by_fachbereich(rows: list[StudyProgramRow]) -> dict[str, list[str]]:
         key = row.fachbereich or "Ohne Fachbereich"
         groups.setdefault(key, []).append(row.studiengang)
     return {key: sorted(values) for key, values in sorted(groups.items())}
+
+
+def _filter_hidden_study_programs(
+    rows: list[StudyProgramRow], hidden_programs: set[str]
+) -> list[StudyProgramRow]:
+    """Entfernt alle Studiengänge, die in der Ausblendeliste stehen."""
+
+    if not hidden_programs:
+        return rows
+    hidden_normalized = {name.strip().lower() for name in hidden_programs if name.strip()}
+    return [row for row in rows if row.studiengang.strip().lower() not in hidden_normalized]
+
+
+def _normalize_selection(
+    fachbereiche: dict[str, list[str]],
+    fachbereich_by_program: dict[str, str],
+    selected_kind: str,
+    selected_value: object,
+) -> tuple[str, str]:
+    """Sorgt dafür, dass die Sidebar-Auswahl nach Filterung gültig bleibt."""
+
+    if selected_kind == "fachbereich" and isinstance(selected_value, str) and selected_value in fachbereiche:
+        return selected_kind, selected_value
+
+    if selected_kind == "program" and isinstance(selected_value, str) and selected_value in fachbereich_by_program:
+        return selected_kind, selected_value
+
+    first_fachbereich = next(iter(fachbereiche))
+    first_program = fachbereiche[first_fachbereich][0]
+    return "program", first_program
 
 
 def _sum_year_series(rows: list[StudyProgramRow], attr: str) -> dict[str, int | None]:
