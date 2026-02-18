@@ -138,7 +138,7 @@ def _render_profile_sections(row: StudyProgramRow) -> None:
         _render_profile_table(row.vorstudium_profil)
 
         st.markdown(
-            '<div class="panel-title">Dozentenherkunft (Lehrveranstaltungsstunden)</div>',
+            '<div class="panel-title">Dozierendenherkunft</div>',
             unsafe_allow_html=True,
         )
         _render_profile_table(row.dozenten_herkunft_profil)
@@ -147,7 +147,7 @@ def _render_profile_sections(row: StudyProgramRow) -> None:
         st.markdown('<div class="panel-title">Modulbelegung nach Studiengängen</div>', unsafe_allow_html=True)
         _render_profile_table(row.module_belegung_nach_sg)
 
-        st.markdown('<div class="panel-title">Herkunft der Modulteilnehmer</div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel-title">Herkunft der Modulteilnehmer(innen)</div>', unsafe_allow_html=True)
         _render_profile_table(row.modulteilnehmer_herkunft)
 
 
@@ -173,14 +173,30 @@ def _render_fachbereich_overview(rows: list[StudyProgramRow], import_year: int |
         )
         _render_year_series(_sum_year_series(rows, "immatrikulierte"), import_year)
 
+    _render_kpi_row(
+        [
+            ("Erfolgsquote", _format_percent(_average_metric(rows, "erfolgsquote"))),
+            ("Ø Benötigte Anzahl an Fachsemestern", _format_number(_average_metric(rows, "fachsemester"))),
+            ("Ø Berufserfahrung zu Studienbeginn in Jahren", _format_number(_average_metric(rows, "berufserfahrung"))),
+            ("Ø Alter zu Studienbeginn in Jahren", _format_number(_average_metric(rows, "alter"))),
+        ]
+    )
+
     _section_title("Module")
     cols = st.columns(2)
     with cols[0]:
         st.markdown('<div class="panel-title">Modulbelegung nach Studiengängen</div>', unsafe_allow_html=True)
         _render_profile_table(_aggregate_profiles(rows, "module_belegung_nach_sg"))
     with cols[1]:
-        st.markdown('<div class="panel-title">Herkunft der Modulteilnehmer</div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel-title">Herkunft der Modulteilnehmer(innen)</div>', unsafe_allow_html=True)
         _render_profile_table(_aggregate_profiles(rows, "modulteilnehmer_herkunft"))
+
+    _render_kpi_row(
+        [
+            ("Durchschnittliche Modulauslastung", _format_number(_average_metric(rows, "modulauslastung"))),
+        ],
+        columns=1,
+    )
 
 
 def _render_year_series(values: dict[str, int | None], import_year: int | None) -> None:
@@ -348,6 +364,15 @@ def _aggregate_profiles(rows: list[StudyProgramRow], attr: str) -> dict[str, flo
                 continue
             totals[key] = totals.get(key, 0.0) + float(value)
     return totals
+
+
+def _average_metric(rows: list[StudyProgramRow], attr: str) -> float | None:
+    """Mittelwert über einen numerischen Kennzahlenwert mehrerer Studiengänge."""
+
+    values = [float(value) for row in rows if (value := getattr(row, attr)) is not None]
+    if not values:
+        return None
+    return sum(values) / len(values)
 
 
 def _fachbereich_header(fachbereich: str) -> str:
