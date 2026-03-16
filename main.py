@@ -10,8 +10,9 @@ from import_parser import StudyProgramRow, get_latest_import_year, load_latest_i
 # Studiengänge, die nicht im Dashboard angezeigt werden sollen.
 # Namen müssen exakt den Werten in `row.studiengang` entsprechen.
 HIDDEN_STUDY_PROGRAMS: set[str] = {
-    "Master in Business Management (auslaufend)"# "M.Sc. Beispielstudiengang",
+    "Master in Business Management (auslaufend)",  # "M.Sc. Beispielstudiengang",
 }
+CAS_OVERVIEW_LABEL = "CAS Gesamt"
 
 
 def main() -> None:
@@ -35,14 +36,13 @@ def main() -> None:
     fachbereiche = _group_by_fachbereich(data)
     fachbereich_by_program = {row.studiengang: row.fachbereich for row in data}
     if "selected_kind" not in st.session_state:
-        first_fachbereich = next(iter(fachbereiche))
-        st.session_state["selected_kind"] = "program"
-        st.session_state["selected_value"] = fachbereiche[first_fachbereich][0]
+        st.session_state["selected_kind"] = "cas"
+        st.session_state["selected_value"] = CAS_OVERVIEW_LABEL
     else:
         st.session_state["selected_kind"], st.session_state["selected_value"] = _normalize_selection(
             fachbereiche,
             fachbereich_by_program,
-            st.session_state.get("selected_kind", "program"),
+            st.session_state.get("selected_kind", "cas"),
             st.session_state.get("selected_value"),
         )
     selected_kind = st.session_state["selected_kind"]
@@ -50,6 +50,15 @@ def main() -> None:
 
     with st.sidebar:
         st.markdown("### Auswahl")
+        if selected_kind == "cas":
+            st.markdown(f"- **{CAS_OVERVIEW_LABEL}**")
+        else:
+            st.button(
+                CAS_OVERVIEW_LABEL,
+                key="cas-overview",
+                use_container_width=True,
+                on_click=_select_cas,
+            )
         for fachbereich, programs in fachbereiche.items():
             st.markdown(_fachbereich_header(fachbereich), unsafe_allow_html=True)
             if selected_kind == "fachbereich" and selected_value == fachbereich:
@@ -78,18 +87,7 @@ def main() -> None:
         if import_year:
             st.caption(f"Importjahr: {import_year}")
 
-    if selected_kind == "fachbereich":
-        rows = [item for item in data if item.fachbereich == selected_value]
-        _render_fachbereich_overview(rows, import_year, selected_value)
-    else:
-        row = next(item for item in data if item.studiengang == selected_value)
-
-        st.title("Studiengangskennzahlen DHBW CAS")
-        st.subheader(row.studiengang)
-        st.caption(f"Fachbereich: {row.fachbereich}")
-
-        _render_student_metrics(row, import_year)
-        _render_profile_sections(row)
+    _render_selected_view(data, selected_kind, selected_value, import_year)
 
 
 def _render_student_metrics(row: StudyProgramRow, import_year: int | None) -> None:
@@ -151,11 +149,16 @@ def _render_profile_sections(row: StudyProgramRow) -> None:
         _render_profile_table(row.modulteilnehmer_herkunft)
 
 
-def _render_fachbereich_overview(rows: list[StudyProgramRow], import_year: int | None, fachbereich: str) -> None:
-    """Rendert aggregierte Kennzahlen und Profile für einen gesamten Fachbereich."""
+def _render_overview(
+    rows: list[StudyProgramRow],
+    import_year: int | None,
+    title: str,
+    subtitle: str,
+) -> None:
+    """Rendert aggregierte Kennzahlen und Profile für eine beliebige Gesamtübersicht."""
 
-    st.title("Fachbereichsübersicht DHBW CAS")
-    st.subheader(fachbereich)
+    st.title(title)
+    st.subheader(subtitle)
 
     _section_title("Studierendenzahlen")
     cols = st.columns(2)
@@ -295,6 +298,13 @@ def _select_program(program: str) -> None:
     st.session_state["selected_value"] = program
 
 
+def _select_cas() -> None:
+    """Setzt die aktuell ausgewählte CAS-Gesamtübersicht in der Session."""
+
+    st.session_state["selected_kind"] = "cas"
+    st.session_state["selected_value"] = CAS_OVERVIEW_LABEL
+
+
 def _select_fachbereich(fachbereich: str) -> None:
     """Setzt die aktuell ausgewählte Fachbereichsübersicht in der Session."""
 
@@ -331,15 +341,43 @@ def _normalize_selection(
 ) -> tuple[str, str]:
     """Sorgt dafür, dass die Sidebar-Auswahl nach Filterung gültig bleibt."""
 
+    if selected_kind == "cas":
+        return "cas", CAS_OVERVIEW_LABEL
+
     if selected_kind == "fachbereich" and isinstance(selected_value, str) and selected_value in fachbereiche:
         return selected_kind, selected_value
 
     if selected_kind == "program" and isinstance(selected_value, str) and selected_value in fachbereich_by_program:
         return selected_kind, selected_value
 
-    first_fachbereich = next(iter(fachbereiche))
-    first_program = fachbereiche[first_fachbereich][0]
-    return "program", first_program
+    return "cas", CAS_OVERVIEW_LABEL
+
+
+def _render_selected_view(
+    data: list[StudyProgramRow],
+    selected_kind: str,
+    selected_value: str,
+    import_year: int | None,
+) -> None:
+    """Rendert die zur aktuellen Auswahl passende Detail- oder Übersichtsansicht."""
+
+    if selected_kind == "cas":
+        _render_overview(data, import_year, "Gesamtübersicht DHBW CAS", CAS_OVERVIEW_LABEL)
+        return
+
+    if selected_kind == "fachbereich":
+        rows = [item for item in data if item.fachbereich == selected_value]
+        _render_overview(rows, import_year, "Fachbereichsübersicht DHBW CAS", selected_value)
+        return
+
+    row = next(item for item in data if item.studiengang == selected_value)
+
+    st.title("Studiengangskennzahlen DHBW CAS")
+    st.subheader(row.studiengang)
+    st.caption(f"Fachbereich: {row.fachbereich}")
+
+    _render_student_metrics(row, import_year)
+    _render_profile_sections(row)
 
 
 def _sum_year_series(rows: list[StudyProgramRow], attr: str) -> dict[str, int | None]:
