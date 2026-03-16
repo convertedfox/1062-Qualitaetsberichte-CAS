@@ -9,6 +9,6 @@ wheels/
 # Virtual environments
 .venv
 
-# Agenten files
+# Agents files
 Plan.md
-agent.md
+AGENTS.md
